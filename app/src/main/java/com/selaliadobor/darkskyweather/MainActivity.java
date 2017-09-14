@@ -7,6 +7,13 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.MenuItem;
 import android.widget.TextView;
 
+import com.selaliadobor.darkskyweather.data.HourlyReport;
+import com.selaliadobor.darkskyweather.job.RetrieveWeatherJob;
+import com.selaliadobor.darkskyweather.job.RetrieveWeatherJobSetupException;
+
+import io.realm.Realm;
+import timber.log.Timber;
+
 public class MainActivity extends AppCompatActivity {
 
     private TextView mTextMessage;
@@ -40,6 +47,16 @@ public class MainActivity extends AppCompatActivity {
         mTextMessage = (TextView) findViewById(R.id.message);
         BottomNavigationView navigation = (BottomNavigationView) findViewById(R.id.navigation);
         navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
+        try {
+            RetrieveWeatherJob.startWeatherRetrievalJob("06103",this);
+        } catch (RetrieveWeatherJobSetupException e) {
+            e.printStackTrace();
+        }
+
+        Realm realm = Realm.getDefaultInstance();
+        realm.where(HourlyReport.class).findAllAsync().asObservable().subscribe(hourlyReports -> {
+            Timber.i("Updated: %s",hourlyReports);
+        });
     }
 
 }
