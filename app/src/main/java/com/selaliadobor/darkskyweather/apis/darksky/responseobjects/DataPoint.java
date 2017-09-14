@@ -15,21 +15,41 @@ import com.google.gson.annotations.SerializedName;
 @AutoValue
 public abstract class DataPoint {
 
-    @SerializedName("time")
-    public abstract double time();
+    public static TypeAdapter<DataPoint> typeAdapter(Gson gson) {
+        return new AutoValue_DataPoint.GsonTypeAdapter(gson);
+    }
 
+    @SerializedName("time")
+    public abstract long time();
+
+    /**
+     * @apiNote Only valid for Daily Data Points. Will be null for Hourly Data Points
+     */
     @Nullable
     @SerializedName("apparentTemperatureHigh")
     public abstract Double apparentTemperatureHigh();
 
+    /**
+     * @apiNote Only valid for Daily Data Points. Will be null for Hourly Data Points
+     */
     @Nullable
     @SerializedName("apparentTemperatureHighTime")
     public abstract Double apparentTemperatureHighTime();
 
+    /**
+     * @apiNote Only valid for Daily Data Points. Will be null for Hourly Data Points
+     */
     @Nullable
     @SerializedName("apparentTemperatureLow")
     public abstract Double apparentTemperatureLow();
 
+    @Nullable
+    @SerializedName("apparentTemperature")
+    public abstract Double apparentTemperature();
+
+    /**
+     * @apiNote Only valid for Daily Data Points. Will be null for Hourly Data Points
+     */
     @Nullable
     @SerializedName("apparentTemperatureLowTime")
     public abstract Double apparentTemperatureLowTime();
@@ -45,8 +65,4 @@ public abstract class DataPoint {
     @Nullable
     @SerializedName("summary")
     public abstract String summary();
-
-    public static TypeAdapter<DataPoint> typeAdapter(Gson gson) {
-        return new AutoValue_DataPoint.GsonTypeAdapter(gson);
-    }
 }

@@ -14,6 +14,10 @@ import java.util.List;
  */
 @AutoValue
 public abstract class ForecastResponse {
+    public static TypeAdapter<ForecastResponse> typeAdapter(Gson gson) {
+        return new AutoValue_ForecastResponse.GsonTypeAdapter(gson);
+    }
+
     @Nullable
     @SerializedName("latitude")
     public abstract String latitude();
@@ -37,8 +41,4 @@ public abstract class ForecastResponse {
     @Nullable
     @SerializedName("daily")
     public abstract DataBlock daily();
-
-    public static TypeAdapter<ForecastResponse> typeAdapter(Gson gson) {
-        return new AutoValue_ForecastResponse.GsonTypeAdapter(gson);
-    }
 }

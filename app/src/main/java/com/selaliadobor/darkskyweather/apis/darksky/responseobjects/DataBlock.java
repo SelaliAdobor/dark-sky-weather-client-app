@@ -15,6 +15,10 @@ import java.util.List;
 @AutoValue
 public abstract class DataBlock {
 
+    public static TypeAdapter<DataBlock> typeAdapter(Gson gson) {
+        return new AutoValue_DataBlock.GsonTypeAdapter(gson);
+    }
+
     @SerializedName("data")
     public abstract List<DataPoint> data();
 
@@ -25,8 +29,4 @@ public abstract class DataBlock {
     @Nullable
     @SerializedName("icon")
     public abstract String icon();
-
-    public static TypeAdapter<DataBlock> typeAdapter(Gson gson) {
-        return new AutoValue_DataBlock.GsonTypeAdapter(gson);
-    }
 }

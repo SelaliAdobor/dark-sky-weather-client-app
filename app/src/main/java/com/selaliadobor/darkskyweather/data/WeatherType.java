@@ -1,7 +1,10 @@
 package com.selaliadobor.darkskyweather.data;
 
-
+/**
+ * Represents the type of weather dominant for a given time period
+ */
 public enum WeatherType {
+    UNKNOWN,
     DAY,
     NIGHT,
     RAIN,
