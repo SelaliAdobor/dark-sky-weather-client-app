@@ -22,10 +22,13 @@ import com.selaliadobor.darkskyweather.data.HourlyReport;
 import com.selaliadobor.darkskyweather.data.WeatherType;
 
 import java.io.IOException;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import io.realm.Realm;
+import io.realm.RealmResults;
 import okhttp3.OkHttpClient;
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -122,8 +125,33 @@ public class RetrieveWeatherJob extends Job {
 
                 transaction.copyToRealmOrUpdate(hourlyReport);
                 Timber.i("Wrote hourly weather info for %d",hourlyReport.getDate());
+
+                deleteOldRealmEntries(zipCode, transaction);
+
             }
         });
+    }
+
+    private void deleteOldRealmEntries(String zipCode, Realm transaction) {
+            long startOfToday = getStartOfDate(new Date());
+
+            RealmResults<DailyReport> oldDailyReports = transaction
+                    .where(DailyReport.class)
+                    .notEqualTo("zipCode", zipCode)
+                    .or()
+                    .lessThan("date", startOfToday)
+                    .findAll();
+            Timber.i("Deleting %d old daily entries",oldDailyReports);
+            oldDailyReports.deleteAllFromRealm();
+
+            RealmResults<HourlyReport> oldHourlyReports = transaction
+                    .where(HourlyReport.class)
+                    .notEqualTo("zipCode", zipCode)
+                    .or()
+                    .lessThan("date", startOfToday)
+                    .findAll();
+            Timber.i("Deleting %d old hourly entries",oldHourlyReports);
+            oldHourlyReports .deleteAllFromRealm();
     }
 
     /**
@@ -149,6 +177,10 @@ public class RetrieveWeatherJob extends Job {
 
         Address address = addresses.get(0);
 
+        startUpdates(zipCode, address);
+    }
+
+    private static void startUpdates(String zipCode, Address address) {
         PersistableBundleCompat extras = new PersistableBundleCompat();
         extras.putString("zipCode",zipCode);
         extras.putDouble(EXTRA_LATITUTDE, address.getLatitude());
@@ -163,6 +195,20 @@ public class RetrieveWeatherJob extends Job {
                 .setUpdateCurrent(true)
                 .build()
                 .schedule();
+    }
+    public long getStartOfDate(Date date) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(date);
+
+        calendar.set(Calendar.MINUTE, 0);
+
+        calendar.set(Calendar.SECOND, 0);
+
+        calendar.set(Calendar.MILLISECOND, 0);
+
+        calendar.set(Calendar.HOUR_OF_DAY, 0);
+
+        return calendar.getTime().getTime();
     }
 
 }

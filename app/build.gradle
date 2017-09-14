@@ -24,7 +24,7 @@ android {
     buildTypes {
         all {
             buildConfigField "String", "DARK_SKY_API_KEY", System.getenv("DARK_SKY_API_KEY") ?: project.property("DARK_SKY_API_KEY")
-            buildConfigField "int", "DARK_SKY_UPDATE_INTERVAL", System.getenv("DARK_SKY_UPDATE_INTERVAL") ?: project.property("DARK_SKY_UPDATE_INTERVAL")
+            buildConfigField "int", "DARK_SKY_UPDATE_INTERVAL", System.getenv("DARK_SKY_UPDATE_INTERVAL") ?: "15"
         }
         release {
             minifyEnabled false
