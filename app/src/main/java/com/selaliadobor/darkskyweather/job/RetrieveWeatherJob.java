@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 
 import io.realm.Realm;
@@ -92,7 +93,7 @@ public class RetrieveWeatherJob extends Job {
             for(DataPoint dailyDataPoint : forecastResponse.daily().data()){
                 DailyReport dailyReport = new DailyReport();
 
-                dailyReport.setDate(dailyDataPoint.time());
+                dailyReport.setDate(dailyDataPoint.time()*1000);
 
                 WeatherType weatherType = DarkSkyWeatherServiceUtil.weatherTypeFromIcon(dailyDataPoint.icon());
                 dailyReport.setWeatherType(weatherType);
@@ -112,7 +113,7 @@ public class RetrieveWeatherJob extends Job {
             for(DataPoint hourlyDataPoint : forecastResponse.hourly().data()){
                 HourlyReport hourlyReport = new HourlyReport();
 
-                hourlyReport.setDate(hourlyDataPoint.time());
+                hourlyReport.setDate(hourlyDataPoint.time()*1000);
 
                 WeatherType weatherType = DarkSkyWeatherServiceUtil.weatherTypeFromIcon(hourlyDataPoint.icon());
                 hourlyReport.setWeatherType(weatherType);
@@ -141,7 +142,7 @@ public class RetrieveWeatherJob extends Job {
                     .or()
                     .lessThan("date", startOfToday)
                     .findAll();
-            Timber.i("Deleting %d old daily entries",oldDailyReports);
+            Timber.i("Deleting %s old daily entries",oldDailyReports);
             oldDailyReports.deleteAllFromRealm();
 
             RealmResults<HourlyReport> oldHourlyReports = transaction
@@ -150,7 +151,7 @@ public class RetrieveWeatherJob extends Job {
                     .or()
                     .lessThan("date", startOfToday)
                     .findAll();
-            Timber.i("Deleting %d old hourly entries",oldHourlyReports);
+            Timber.i("Deleting %s old hourly entries older than %d",oldHourlyReports,startOfToday);
             oldHourlyReports .deleteAllFromRealm();
     }
 
@@ -199,7 +200,7 @@ public class RetrieveWeatherJob extends Job {
     public long getStartOfDate(Date date) {
         Calendar calendar = Calendar.getInstance();
         calendar.setTime(date);
-
+        calendar.setTimeZone(TimeZone.getTimeZone("GMT"));
         calendar.set(Calendar.MINUTE, 0);
 
         calendar.set(Calendar.SECOND, 0);

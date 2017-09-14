@@ -53,8 +53,8 @@ public class HourlyReport extends RealmObject {
         this.summary = summary;
     }
 
-    public String getWeatherType() {
-        return weatherType;
+    public WeatherType getWeatherType() {
+        return WeatherType.valueOf(weatherType);
     }
 
     public void setWeatherType(WeatherType weatherType) {

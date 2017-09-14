@@ -4,14 +4,27 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.BottomNavigationView;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.OrientationHelper;
 import android.view.MenuItem;
 import android.widget.TextView;
 
+import com.facebook.litho.Component;
+import com.facebook.litho.ComponentContext;
+import com.facebook.litho.ComponentInfo;
+import com.facebook.litho.LithoView;
+import com.facebook.litho.widget.LinearLayoutInfo;
+import com.facebook.litho.widget.Recycler;
+import com.facebook.litho.widget.RecyclerBinder;
 import com.selaliadobor.darkskyweather.data.HourlyReport;
 import com.selaliadobor.darkskyweather.job.RetrieveWeatherJob;
 import com.selaliadobor.darkskyweather.job.RetrieveWeatherJobSetupException;
+import com.selaliadobor.darkskyweather.layoutspecs.HourlyReportListItemLayout;
+
+import java.util.Date;
 
 import io.realm.Realm;
+import io.realm.RealmResults;
+import io.realm.Sort;
 import timber.log.Timber;
 
 public class MainActivity extends AppCompatActivity {
@@ -42,21 +55,39 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-
-        mTextMessage = (TextView) findViewById(R.id.message);
-        BottomNavigationView navigation = (BottomNavigationView) findViewById(R.id.navigation);
-        navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
         try {
             RetrieveWeatherJob.startWeatherRetrievalJob("06103",this);
         } catch (RetrieveWeatherJobSetupException e) {
-            e.printStackTrace();
+            throw new RuntimeException(e);
         }
 
         Realm realm = Realm.getDefaultInstance();
-        realm.where(HourlyReport.class).findAllAsync().asObservable().subscribe(hourlyReports -> {
-            Timber.i("Updated: %s",hourlyReports);
+
+
+        final ComponentContext componentContext = new ComponentContext(this);
+
+        final RecyclerBinder recyclerBinder = new RecyclerBinder.Builder()
+                .layoutInfo( new LinearLayoutInfo(this, OrientationHelper.VERTICAL, false))
+                .build(componentContext);
+
+
+        Date value = new Date();
+        realm.where(HourlyReport.class).greaterThan("date", value).findAllSorted("date", Sort.ASCENDING).asObservable().subscribe(hourlyReports -> {
+            for (int i = 0; i < hourlyReports.size(); i++) {
+                recyclerBinder.insertItemAt(
+                        i,
+                        HourlyReportListItemLayout.create(componentContext)
+                                .hourlyReport(realm.copyFromRealm(hourlyReports.get(i))).build());
+            }
         });
+        final Component<Recycler> recyclerComponent = Recycler.create(componentContext)
+                .binder(recyclerBinder)
+                .build();
+
+        final LithoView lithoView = LithoView.create(
+                this,
+                recyclerComponent);
+        setContentView(lithoView);
     }
 
 }
