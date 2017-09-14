@@ -56,6 +56,7 @@ public class RetrieveWeatherJob extends Job {
         String zipCode = params.getExtras().getString(EXTRA_ZIP_CODE, null);
         double latitude = params.getExtras().getDouble(EXTRA_LATITUTDE,0.0);
         double longitude = params.getExtras().getDouble(EXTRA_LONGITUDE,0.0);
+
         Gson gson = new GsonBuilder()
                 .registerTypeAdapterFactory(GsonTypeAdaptorFactory.create())
                 .create();
@@ -133,7 +134,7 @@ public class RetrieveWeatherJob extends Job {
         });
     }
 
-    private void deleteOldRealmEntries(String zipCode, Realm transaction) {
+    private static void deleteOldRealmEntries(String zipCode, Realm transaction) {
             long startOfToday = getStartOfDate(new Date());
 
             RealmResults<DailyReport> oldDailyReports = transaction
@@ -142,7 +143,7 @@ public class RetrieveWeatherJob extends Job {
                     .or()
                     .lessThan("date", startOfToday)
                     .findAll();
-            Timber.i("Deleting %s old daily entries",oldDailyReports);
+            Timber.i("Deleting %s old daily entries",oldDailyReports.size());
             oldDailyReports.deleteAllFromRealm();
 
             RealmResults<HourlyReport> oldHourlyReports = transaction
@@ -151,8 +152,8 @@ public class RetrieveWeatherJob extends Job {
                     .or()
                     .lessThan("date", startOfToday)
                     .findAll();
-            Timber.i("Deleting %s old hourly entries older than %d",oldHourlyReports,startOfToday);
-            oldHourlyReports .deleteAllFromRealm();
+            Timber.i("Deleting %s old hourly entries older than %d",oldHourlyReports.size(),startOfToday);
+            oldHourlyReports.deleteAllFromRealm();
     }
 
     /**
@@ -162,6 +163,8 @@ public class RetrieveWeatherJob extends Job {
      * @throws RetrieveWeatherJobSetupException Thrown if the job could not be configured with the given parameters
      */
     public static void startWeatherRetrievalJob(String zipCode, Context context) throws RetrieveWeatherJobSetupException {
+
+
         Geocoder geocoder = new Geocoder(context);
 
         List<Address> addresses;
@@ -169,7 +172,8 @@ public class RetrieveWeatherJob extends Job {
         try {
             addresses = geocoder.getFromLocationName(zipCode, 1);
         } catch (IOException exception) {
-            throw new RetrieveWeatherJobSetupException("Could not encode zip as address",exception);
+            Timber.e(exception,"Failed to access Geocoder");
+            throw new RetrieveWeatherJobSetupException("Could not access Geocoder Service, is the device online?",exception);
         }
 
         if(addresses.size() < 1){
@@ -179,9 +183,14 @@ public class RetrieveWeatherJob extends Job {
         Address address = addresses.get(0);
 
         startUpdates(zipCode, address);
+
+        Realm.getDefaultInstance().executeTransaction(transaction->{
+            deleteOldRealmEntries(zipCode,  transaction);
+        });
     }
 
     private static void startUpdates(String zipCode, Address address) {
+
         PersistableBundleCompat extras = new PersistableBundleCompat();
         extras.putString("zipCode",zipCode);
         extras.putDouble(EXTRA_LATITUTDE, address.getLatitude());
@@ -196,8 +205,11 @@ public class RetrieveWeatherJob extends Job {
                 .setUpdateCurrent(true)
                 .build()
                 .schedule();
+
+
     }
-    public long getStartOfDate(Date date) {
+
+    public static long getStartOfDate(Date date) {
         Calendar calendar = Calendar.getInstance();
         calendar.setTime(date);
         calendar.setTimeZone(TimeZone.getTimeZone("GMT"));

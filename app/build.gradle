@@ -70,6 +70,8 @@ dependencies {
     compile 'com.facebook.soloader:soloader:0.2.0'
     compile 'com.github.pavlospt:litho-glide:1.0'
     compile 'com.android.support:support-v4:25.3.1'
+    compile 'com.jakewharton.rxbinding:rxbinding:1.0.1'
+
     testCompile 'junit:junit:4.12'
     testCompile 'commons-io:commons-io:2.5'
     annotationProcessor 'com.jakewharton:butterknife-compiler:8.8.1'

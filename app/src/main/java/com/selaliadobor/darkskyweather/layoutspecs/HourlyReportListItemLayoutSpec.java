@@ -25,7 +25,8 @@ public class HourlyReportListItemLayoutSpec {
     @OnCreateLayout
     static ComponentLayout onCreateLayout(
             ComponentContext c,
-            @Prop HourlyReport hourlyReport) {
+            @Prop HourlyReport hourlyReport,
+            @Prop int heightDip) {
         String temperatureString = String.format(Locale.ENGLISH, "%.2f° F", hourlyReport.getTemperature());
         ComponentLayout textColumn = Column.create(c)
                 .marginDip(YogaEdge.LEFT, 16)
@@ -43,7 +44,7 @@ public class HourlyReportListItemLayoutSpec {
                 )
                 .build();
         return Row.create(c)
-                .heightDip(50)
+                .heightDip(heightDip)
                 .backgroundColor(Color.argb(255,135,206,250))
                 .child(GlideImage.create(c)
                     .resourceId(hourlyReport.getWeatherType().getDrawableId())
