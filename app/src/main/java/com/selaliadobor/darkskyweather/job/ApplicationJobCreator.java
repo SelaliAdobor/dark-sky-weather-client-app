@@ -1,7 +1,11 @@
 package com.selaliadobor.darkskyweather.job;
 
+import android.support.annotation.NonNull;
+
 import com.evernote.android.job.Job;
 import com.evernote.android.job.JobCreator;
+
+import timber.log.Timber;
 
 
 public class ApplicationJobCreator implements JobCreator {
@@ -11,7 +15,14 @@ public class ApplicationJobCreator implements JobCreator {
             case RetrieveWeatherJob.JOB_TAG:
                 return new RetrieveWeatherJob();
             default:
-                throw new RuntimeException("No Job defined for tag: "+tag);
+                Timber.e("No Job defined for tag: " + tag);
+                return new Job() {
+                    @NonNull
+                    @Override
+                    protected Result onRunJob(Params params) {
+                        return Result.FAILURE;
+                    }
+                };
         }
     }
 }
