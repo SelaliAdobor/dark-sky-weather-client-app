@@ -6,8 +6,6 @@ import com.evernote.android.job.JobManager;
 import com.facebook.soloader.SoLoader;
 import com.selaliadobor.darkskyweather.job.ApplicationJobCreator;
 
-import java.io.File;
-
 import io.realm.Realm;
 import io.realm.RealmConfiguration;
 import timber.log.Timber;
@@ -31,10 +29,10 @@ public class DarkSkyClientApplication extends Application {
     private void initRealm() {
         Realm.init(this);
 
-        if(BuildConfig.DEBUG){
+        if (BuildConfig.DEBUG) {
             RealmConfiguration debugConfiguration = new RealmConfiguration.Builder()
-                        .deleteRealmIfMigrationNeeded()
-                        .build();
+                    .deleteRealmIfMigrationNeeded()
+                    .build();
             Realm.setDefaultConfiguration(debugConfiguration);
         }
     }

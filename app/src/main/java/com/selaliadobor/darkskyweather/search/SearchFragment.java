@@ -1,7 +1,6 @@
 package com.selaliadobor.darkskyweather.search;
 
 
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.OrientationHelper;
@@ -71,8 +70,7 @@ public class SearchFragment extends Fragment {
     }
 
     public static SearchFragment create() {
-        SearchFragment fragment = new SearchFragment();
-        return fragment;
+        return new SearchFragment();
     }
 
     @Override
@@ -120,6 +118,7 @@ public class SearchFragment extends Fragment {
                         }));
         return inflatedView;
     }
+
     private void setupHourlyView(ComponentContext componentContext) {
         Realm realm = Realm.getDefaultInstance();
 
@@ -151,6 +150,7 @@ public class SearchFragment extends Fragment {
         hourlyLithoView.getLayoutParams().height = ((int) (getResources().getDisplayMetrics().density * HOURLY_ITEM_COUNT * HOURLY_VIEW_ITEM_HEIGHT_DP));
         hourlyLithoView.requestLayout();
     }
+
     private void setupDailyView(ComponentContext componentContext) {
         Realm realm = Realm.getDefaultInstance();
 
@@ -181,32 +181,33 @@ public class SearchFragment extends Fragment {
         dailyLithoView.getLayoutParams().height = ((int) (getResources().getDisplayMetrics().density * DAILY_TERM_COMPRESSED_ITEM_COUNT * DAILY_VIEW_ITEM_HEIGHT_DP));
         dailyLithoView.requestLayout();
     }
+
     private void updateHourlyReports(Realm realm, ComponentContext componentContext, RecyclerBinder recyclerBinder, RealmResults<HourlyReport> hourlyReports) {
-            int itemCount = Math.min(HOURLY_ITEM_COUNT, hourlyReports.size());
-            if (itemCount < recyclerBinder.getItemCount() && recyclerBinder.getItemCount() > 0) {
-                recyclerBinder.removeRangeAt(Math.max(0, itemCount - 1), Math.max(0,  recyclerBinder.getItemCount() - itemCount));
-            }
-            for (int i = 0; i < itemCount; i++) {
-                HourlyReport hourlyReport = realm.copyFromRealm(hourlyReports.get(i));
-                Component<HourlyReportListItemLayout> listItem = HourlyReportListItemLayout.create(componentContext)
-                        .heightDip(HOURLY_VIEW_ITEM_HEIGHT_DP)
-                        .clickEventHandler(() -> {
-                            getActivity()
-                                    .getSupportFragmentManager()
-                                    .beginTransaction()
-                                    .replace(R.id.content, FullDayWeatherFragment.create(),null)
-                                    .addToBackStack(null)
-                                    .commit();
-                        })
-                        .hourlyReport(hourlyReport)
-                        .build();
-                if (recyclerBinder.isValidPosition(i)) {
-                    recyclerBinder.updateItemAt(i, listItem);
-                } else {
-                    recyclerBinder.insertItemAt(i, listItem);
-                }
+        int itemCount = Math.min(HOURLY_ITEM_COUNT, hourlyReports.size());
+        if (itemCount < recyclerBinder.getItemCount() && recyclerBinder.getItemCount() > 0) {
+            recyclerBinder.removeRangeAt(Math.max(0, itemCount - 1), Math.max(0, recyclerBinder.getItemCount() - itemCount));
+        }
+        for (int i = 0; i < itemCount; i++) {
+            HourlyReport hourlyReport = realm.copyFromRealm(hourlyReports.get(i));
+            Component<HourlyReportListItemLayout> listItem = HourlyReportListItemLayout.create(componentContext)
+                    .heightDip(HOURLY_VIEW_ITEM_HEIGHT_DP)
+                    .clickEventHandler(() -> {
+                        getActivity()
+                                .getSupportFragmentManager()
+                                .beginTransaction()
+                                .replace(R.id.content, FullDayWeatherFragment.create(), null)
+                                .addToBackStack(null)
+                                .commit();
+                    })
+                    .hourlyReport(hourlyReport)
+                    .build();
+            if (recyclerBinder.isValidPosition(i)) {
+                recyclerBinder.updateItemAt(i, listItem);
+            } else {
+                recyclerBinder.insertItemAt(i, listItem);
             }
         }
+    }
 
     private void updateDailyReports(Realm realm, ComponentContext componentContext, RecyclerBinder recyclerBinder, RealmResults<DailyReport> dailyReports) {
         updateDailyRecycler = (isExpanded) -> {
@@ -214,7 +215,7 @@ public class SearchFragment extends Fragment {
                     dailyReports.size() :
                     Math.min(DAILY_TERM_COMPRESSED_ITEM_COUNT, dailyReports.size());
             if (itemCount < recyclerBinder.getItemCount() && recyclerBinder.getItemCount() > 0) {
-                recyclerBinder.removeRangeAt(Math.max(0, itemCount - 1), Math.max(0,  recyclerBinder.getItemCount() - itemCount));
+                recyclerBinder.removeRangeAt(Math.max(0, itemCount - 1), Math.max(0, recyclerBinder.getItemCount() - itemCount));
             }
             for (int i = 0; i < itemCount; i++) {
                 DailyReport dailyReport = realm.copyFromRealm(dailyReports.get(i));

@@ -38,7 +38,7 @@ public class DailyReportListItemLayoutSpec {
             @Prop int heightDip,
             @Prop Runnable clickEventHandler) {
         String temperatureString = String.format(Locale.ENGLISH, "%.2f° | %.2f°", dailyReport.getHighTemp(), dailyReport.getLowTemp());
-        SimpleDateFormat dateFormat = new SimpleDateFormat("EEEE",Locale.getDefault());
+        SimpleDateFormat dateFormat = new SimpleDateFormat("EEEE", Locale.getDefault());
         String dayOfWeek = dateFormat.format(new Date(dailyReport.getDate())).toUpperCase();
         ComponentLayout textColumn = Column.create(c)
                 .child(
@@ -72,7 +72,7 @@ public class DailyReportListItemLayoutSpec {
                                                 .fitCenter(true)
                                                 .buildWithLayout())
                                 .child(textColumn)
-                        .marginDip(YogaEdge.BOTTOM,8)
+                                .marginDip(YogaEdge.BOTTOM, 8)
                 )
                 .backgroundColor(Color.argb(255, 135, 206, 250))
                 .heightDip(heightDip)

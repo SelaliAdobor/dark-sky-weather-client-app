@@ -7,8 +7,6 @@ import com.google.gson.Gson;
 import com.google.gson.TypeAdapter;
 import com.google.gson.annotations.SerializedName;
 
-import java.util.List;
-
 /**
  * Represents a Data Block response from Dark Sky api.
  */

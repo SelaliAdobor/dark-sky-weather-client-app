@@ -13,7 +13,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public void onBackPressed() {
-        if (getFragmentManager().getBackStackEntryCount() > 0 ){
+        if (getFragmentManager().getBackStackEntryCount() > 0) {
             getFragmentManager().popBackStack();
         } else {
             super.onBackPressed();
@@ -25,32 +25,37 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.activity_main);
-
-        getSupportFragmentManager().addOnBackStackChangedListener(()->{
-            boolean enableBackButton = getSupportFragmentManager().getBackStackEntryCount() > 0;
-            getSupportActionBar().setHomeButtonEnabled(enableBackButton);
-            getSupportActionBar().setDisplayHomeAsUpEnabled(enableBackButton);
-        });
+        updateBackButtonState();
+        getSupportFragmentManager().addOnBackStackChangedListener(this::updateBackButtonState);
 
         SearchFragment searchFragment = null;
 
-        if(savedInstanceState != null){
+        if (savedInstanceState != null) {
             searchFragment = (SearchFragment) getSupportFragmentManager().findFragmentByTag(SEARCH_FRAGMENT_TAG);
         }
 
-        if(searchFragment == null){
+        if (searchFragment == null) {
             searchFragment = SearchFragment.create();
         }
 
-        getSupportFragmentManager()
-                .beginTransaction()
-                 .replace(R.id.content, searchFragment, SEARCH_FRAGMENT_TAG)
-                 .commit();
+
+        if(getSupportFragmentManager().getBackStackEntryCount() < 1){
+            getSupportFragmentManager()
+                    .beginTransaction()
+                    .replace(R.id.content, searchFragment, SEARCH_FRAGMENT_TAG)
+                    .commit();
+        }
+    }
+
+    private void updateBackButtonState() {
+        boolean enableBackButton = getSupportFragmentManager().getBackStackEntryCount() > 0;
+        getSupportActionBar().setHomeButtonEnabled(enableBackButton);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(enableBackButton);
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        if(item.getItemId() == android.R.id.home){
+        if (item.getItemId() == android.R.id.home) {
             getSupportFragmentManager().popBackStack();
             return true;
         }
