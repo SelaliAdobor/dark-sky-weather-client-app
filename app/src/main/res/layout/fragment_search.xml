@@ -24,9 +24,9 @@
         app:layout_constraintGuide_percent="0.9479167" />
 
     <com.facebook.litho.LithoView
-        android:id="@+id/lithoView"
+        android:id="@+id/search_daily_lithoView"
         android:layout_width="0dp"
-        android:layout_height="100dp"
+        android:layout_height="150dp"
         android:layout_marginBottom="8dp"
         android:layout_marginEnd="8dp"
         android:layout_marginLeft="8dp"
@@ -38,20 +38,20 @@
         app:layout_constraintRight_toLeftOf="@+id/guideline2" />
 
         <com.facebook.litho.LithoView
-            android:id="@+id/search_daily_lithoView"
+            android:id="@+id/search_hourly_lithoView"
             android:layout_width="0dp"
             android:layout_height="200dp"
-            android:layout_marginBottom="8dp"
             android:layout_marginLeft="8dp"
             android:layout_marginRight="8dp"
             android:layout_marginTop="8dp"
-            app:layout_constraintBottom_toTopOf="@+id/lithoView"
             app:layout_constraintLeft_toLeftOf="@+id/guideline"
             app:layout_constraintRight_toLeftOf="@+id/guideline2"
             app:layout_constraintTop_toTopOf="@+id/guideline4"
-            app:layout_constraintVertical_bias="0.361"
             android:layout_marginStart="8dp"
-            android:layout_marginEnd="8dp"/>
+            android:layout_marginEnd="8dp"
+            app:layout_constraintHorizontal_bias="0.0"
+            android:layout_marginBottom="8dp"
+            app:layout_constraintBottom_toTopOf="@+id/search_daily_lithoView" />
 
     <EditText
         android:id="@+id/search_zip_code_editText"

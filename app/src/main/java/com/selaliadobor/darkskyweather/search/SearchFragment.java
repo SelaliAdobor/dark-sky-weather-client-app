@@ -21,9 +21,11 @@ import com.jakewharton.rxbinding.view.RxView;
 import com.jakewharton.rxbinding.widget.RxTextView;
 import com.selaliadobor.darkskyweather.R;
 import com.selaliadobor.darkskyweather.data.DailyReport;
+import com.selaliadobor.darkskyweather.data.HourlyReport;
 import com.selaliadobor.darkskyweather.job.RetrieveWeatherJob;
 import com.selaliadobor.darkskyweather.job.RetrieveWeatherJobSetupException;
 import com.selaliadobor.darkskyweather.layoutspecs.DailyReportListItemLayout;
+import com.selaliadobor.darkskyweather.layoutspecs.HourlyReportListItemLayout;
 
 import java.util.Date;
 
@@ -37,6 +39,9 @@ import rx.functions.Action1;
 import rx.subscriptions.CompositeSubscription;
 
 public class SearchFragment extends Fragment {
+    public static final int HOURLY_VIEW_ITEM_HEIGHT_DP = 50;
+    public static final int HOURLY_ITEM_COUNT = 4;
+
     public static final int DAILY_VIEW_ITEM_HEIGHT_DP = 70;
     public static final int DAILY_EXPANDED_ITEM_COUNT = 7;
     public static final int DAILY_TERM_VIEW_EXPANDED_HEIGHT = DAILY_EXPANDED_ITEM_COUNT * DAILY_VIEW_ITEM_HEIGHT_DP;
@@ -46,6 +51,8 @@ public class SearchFragment extends Fragment {
     @BindView(R.id.search_daily_lithoView)
     LithoView dailyLithoView;
 
+    @BindView(R.id.search_hourly_lithoView)
+    LithoView hourlyLithoView;
 
     @BindView(R.id.search_zip_code_editText)
     EditText zipCodeEditText;
@@ -55,8 +62,8 @@ public class SearchFragment extends Fragment {
 
 
     CompositeSubscription lifecycleSubscriptions = new CompositeSubscription();
-    Action1<Boolean> updateRecycler;
-    boolean isExpanded = false;
+    Action1<Boolean> updateDailyRecycler;
+    boolean isHourlyViewExpanded = false;
     private Unbinder unbinder;
 
     public SearchFragment() {
@@ -88,7 +95,17 @@ public class SearchFragment extends Fragment {
                              Bundle savedInstanceState) {
         View inflatedView = inflater.inflate(R.layout.fragment_search, container, false);
         unbinder = ButterKnife.bind(this, inflatedView);
-        setupLitho();
+
+
+        final ComponentContext componentContext = new ComponentContext(getActivity());
+        setupHourlyView(componentContext);
+        setupDailyView(componentContext);
+
+        bindUi();
+        return inflatedView;
+    }
+
+    private void bindUi() {
         lifecycleSubscriptions.add(
                 RxTextView.textChanges(zipCodeEditText)
                         .subscribe(charSequence -> {
@@ -112,46 +129,92 @@ public class SearchFragment extends Fragment {
                                         .show();
                             }
                         }));
-        return inflatedView;
     }
 
-    private void setupLitho() {
-
+    private void setupHourlyView(ComponentContext componentContext) {
         Realm realm = Realm.getDefaultInstance();
 
 
-        final ComponentContext componentContext = new ComponentContext(getActivity());
-
-        final RecyclerBinder recyclerBinder = new RecyclerBinder.Builder()
+        final RecyclerBinder hourlyRecyclerBinder = new RecyclerBinder.Builder()
                 .layoutInfo(new LinearLayoutInfo(getActivity(), OrientationHelper.VERTICAL, false))
                 .build(componentContext);
 
 
-        Date value = new Date();
         lifecycleSubscriptions.add(
                 realm
-                        .where(DailyReport.class)
-                        .greaterThan("date", value.getTime())
+                        .where(HourlyReport.class)
+                        .greaterThan("date", new Date().getTime())
                         .findAllSorted("date", Sort.ASCENDING)
                         .asObservable()
-                        .subscribe(dailyReports -> {
-                            updateDailyReports(realm, componentContext, recyclerBinder, dailyReports);
+                        .subscribe(hourlyReports -> {
+                            updateHourlyReports(realm, componentContext, hourlyRecyclerBinder, hourlyReports);
                         })
         );
 
 
-        final Component<Recycler> recyclerComponent = Recycler.create(componentContext)
-                .binder(recyclerBinder)
+        final Component<Recycler> hourlyRecyclerComponent = Recycler.create(componentContext)
+                .binder(hourlyRecyclerBinder)
                 .build();
 
 
-        dailyLithoView.setComponent(recyclerComponent);
+        hourlyLithoView.setComponent(hourlyRecyclerComponent);
+        hourlyLithoView.getLayoutParams().height = ((int) (getResources().getDisplayMetrics().density * HOURLY_ITEM_COUNT * HOURLY_VIEW_ITEM_HEIGHT_DP));
+        hourlyLithoView.requestLayout();
+    }
+    private void setupDailyView(ComponentContext componentContext) {
+        Realm realm = Realm.getDefaultInstance();
+
+
+        final RecyclerBinder dailyRecyclerBinder = new RecyclerBinder.Builder()
+                .layoutInfo(new LinearLayoutInfo(getActivity(), OrientationHelper.VERTICAL, false))
+                .build(componentContext);
+
+
+        lifecycleSubscriptions.add(
+                realm
+                        .where(DailyReport.class)
+                        .greaterThan("date", new Date().getTime())
+                        .findAllSorted("date", Sort.ASCENDING)
+                        .asObservable()
+                        .subscribe(dailyReports -> {
+                            updateDailyReports(realm, componentContext, dailyRecyclerBinder, dailyReports);
+                        })
+        );
+
+
+        final Component<Recycler> dailyRecyclerComponent = Recycler.create(componentContext)
+                .binder(dailyRecyclerBinder)
+                .build();
+
+
+        dailyLithoView.setComponent(dailyRecyclerComponent);
         dailyLithoView.getLayoutParams().height = ((int) (getResources().getDisplayMetrics().density * DAILY_TERM_COMPRESSED_ITEM_COUNT * DAILY_VIEW_ITEM_HEIGHT_DP));
         dailyLithoView.requestLayout();
     }
+    private void updateHourlyReports(Realm realm, ComponentContext componentContext, RecyclerBinder recyclerBinder, RealmResults<HourlyReport> hourlyReports) {
+            int itemCount = Math.min(HOURLY_ITEM_COUNT, hourlyReports.size());
+            if (itemCount < recyclerBinder.getItemCount() && recyclerBinder.getItemCount() > 0) {
+                recyclerBinder.removeRangeAt(Math.max(0, itemCount - 1), Math.max(0,  recyclerBinder.getItemCount() - itemCount));
+            }
+            for (int i = 0; i < itemCount; i++) {
+                HourlyReport hourlyReport = realm.copyFromRealm(hourlyReports.get(i));
+                Component<HourlyReportListItemLayout> listItem = HourlyReportListItemLayout.create(componentContext)
+                        .heightDip(HOURLY_VIEW_ITEM_HEIGHT_DP)
+                        .clickEventHandler(() -> {
+                            //Go to 24hr view
+                        })
+                        .hourlyReport(hourlyReport)
+                        .build();
+                if (recyclerBinder.isValidPosition(i)) {
+                    recyclerBinder.updateItemAt(i, listItem);
+                } else {
+                    recyclerBinder.insertItemAt(i, listItem);
+                }
+            }
+        }
 
     private void updateDailyReports(Realm realm, ComponentContext componentContext, RecyclerBinder recyclerBinder, RealmResults<DailyReport> dailyReports) {
-        updateRecycler = (isExpanded) -> {
+        updateDailyRecycler = (isExpanded) -> {
             int itemCount = isExpanded ?
                     dailyReports.size() :
                     Math.min(DAILY_TERM_COMPRESSED_ITEM_COUNT, dailyReports.size());
@@ -172,25 +235,26 @@ public class SearchFragment extends Fragment {
                 }
             }
         };
-        updateRecycler.call(isExpanded);
+        updateDailyRecycler.call(isHourlyViewExpanded);
     }
 
     void toggleDailyViewExpansion() {
-        if (updateRecycler == null) {
+        if (updateDailyRecycler == null) {
             return;
         }
 
-        isExpanded = !isExpanded;
+        isHourlyViewExpanded = !isHourlyViewExpanded;
 
 
-        dailyLithoView.animate()
-                .scaleY(1f)
+        hourlyLithoView.animate()
+                .scaleY(isHourlyViewExpanded ? 0f : 1f)
+                .alpha(isHourlyViewExpanded ? 0f : 1f)
                 .setUpdateListener((value) -> {
                     final float scale = getResources().getDisplayMetrics().density;
-                    float startingHeight = isExpanded ?
+                    float startingHeight = isHourlyViewExpanded ?
                             DAILY_TERM_VIEW_COMPRESSED_HEIGHT :
                             DAILY_TERM_VIEW_EXPANDED_HEIGHT;
-                    float targetHeight = isExpanded ?
+                    float targetHeight = isHourlyViewExpanded ?
                             DAILY_TERM_VIEW_EXPANDED_HEIGHT :
                             DAILY_TERM_VIEW_COMPRESSED_HEIGHT;
                     float delta = targetHeight - startingHeight;
@@ -202,13 +266,13 @@ public class SearchFragment extends Fragment {
                 })
                 //If the list is expanding, immediately add new items, otherwise wait until animation finishes
                 .withStartAction(() -> {
-                    if (isExpanded) {
-                        updateRecycler.call(isExpanded);
+                    if (isHourlyViewExpanded) {
+                        updateDailyRecycler.call(isHourlyViewExpanded);
                     }
                 })
                 .withEndAction(() -> {
-                    if (!isExpanded) {
-                        updateRecycler.call(isExpanded);
+                    if (!isHourlyViewExpanded) {
+                        updateDailyRecycler.call(isHourlyViewExpanded);
                     }
                 })
                 .setDuration(500);
