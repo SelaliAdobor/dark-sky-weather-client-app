@@ -20,10 +20,10 @@ import com.facebook.litho.widget.RecyclerBinder;
 import com.jakewharton.rxbinding.view.RxView;
 import com.jakewharton.rxbinding.widget.RxTextView;
 import com.selaliadobor.darkskyweather.R;
-import com.selaliadobor.darkskyweather.data.HourlyReport;
+import com.selaliadobor.darkskyweather.data.DailyReport;
 import com.selaliadobor.darkskyweather.job.RetrieveWeatherJob;
 import com.selaliadobor.darkskyweather.job.RetrieveWeatherJobSetupException;
-import com.selaliadobor.darkskyweather.layoutspecs.HourlyReportListItemLayout;
+import com.selaliadobor.darkskyweather.layoutspecs.DailyReportListItemLayout;
 
 import java.util.Date;
 
@@ -37,14 +37,14 @@ import rx.functions.Action1;
 import rx.subscriptions.CompositeSubscription;
 
 public class SearchFragment extends Fragment {
-    public static final int HOURLY_VIEW_ITEM_HEIGHT_DP = 50;
-    public static final int SHORT_TERM_EXPANDED_ITEM_COUNT = 7;
-    public static final int SHORT_TERM_VIEW_EXPANDED_HEIGHT = SHORT_TERM_EXPANDED_ITEM_COUNT * HOURLY_VIEW_ITEM_HEIGHT_DP;
-    public static final int SHORT_TERM_COMPRESSED_ITEM_COUNT = 4;
-    public static final int SHORT_TERM_VIEW_COMPRESSED_HEIGHT = SHORT_TERM_COMPRESSED_ITEM_COUNT * HOURLY_VIEW_ITEM_HEIGHT_DP;
+    public static final int DAILY_VIEW_ITEM_HEIGHT_DP = 70;
+    public static final int DAILY_EXPANDED_ITEM_COUNT = 7;
+    public static final int DAILY_TERM_VIEW_EXPANDED_HEIGHT = DAILY_EXPANDED_ITEM_COUNT * DAILY_VIEW_ITEM_HEIGHT_DP;
+    public static final int DAILY_TERM_COMPRESSED_ITEM_COUNT = 3;
+    public static final int DAILY_TERM_VIEW_COMPRESSED_HEIGHT = DAILY_TERM_COMPRESSED_ITEM_COUNT * DAILY_VIEW_ITEM_HEIGHT_DP;
 
-    @BindView(R.id.search_short_term_lithoView)
-    LithoView shortTermLithoView;
+    @BindView(R.id.search_daily_lithoView)
+    LithoView dailyLithoView;
 
 
     @BindView(R.id.search_zip_code_editText)
@@ -130,12 +130,12 @@ public class SearchFragment extends Fragment {
         Date value = new Date();
         lifecycleSubscriptions.add(
                 realm
-                        .where(HourlyReport.class)
+                        .where(DailyReport.class)
                         .greaterThan("date", value.getTime())
                         .findAllSorted("date", Sort.ASCENDING)
                         .asObservable()
-                        .subscribe(hourlyReports -> {
-                            listNewReports(realm, componentContext, recyclerBinder, hourlyReports);
+                        .subscribe(dailyReports -> {
+                            updateDailyReports(realm, componentContext, recyclerBinder, dailyReports);
                         })
         );
 
@@ -144,37 +144,38 @@ public class SearchFragment extends Fragment {
                 .binder(recyclerBinder)
                 .build();
 
-        shortTermLithoView.setComponent(recyclerComponent);
 
+        dailyLithoView.setComponent(recyclerComponent);
+        dailyLithoView.getLayoutParams().height = ((int) (getResources().getDisplayMetrics().density * DAILY_TERM_COMPRESSED_ITEM_COUNT * DAILY_VIEW_ITEM_HEIGHT_DP));
+        dailyLithoView.requestLayout();
     }
 
-    private void listNewReports(Realm realm, ComponentContext componentContext, RecyclerBinder recyclerBinder, RealmResults<HourlyReport> hourlyReports) {
+    private void updateDailyReports(Realm realm, ComponentContext componentContext, RecyclerBinder recyclerBinder, RealmResults<DailyReport> dailyReports) {
         updateRecycler = (isExpanded) -> {
             int itemCount = isExpanded ?
-                    hourlyReports.size() :
-                    Math.min(SHORT_TERM_COMPRESSED_ITEM_COUNT, hourlyReports.size());
+                    dailyReports.size() :
+                    Math.min(DAILY_TERM_COMPRESSED_ITEM_COUNT, dailyReports.size());
             if (itemCount < recyclerBinder.getItemCount() && recyclerBinder.getItemCount() > 0) {
                 recyclerBinder.removeRangeAt(Math.max(0, itemCount - 1), Math.max(0,  recyclerBinder.getItemCount() - itemCount));
             }
             for (int i = 0; i < itemCount; i++) {
-                HourlyReport hourlyReport = realm.copyFromRealm(hourlyReports.get(i));
-                Component<HourlyReportListItemLayout> listItem = HourlyReportListItemLayout.create(componentContext)
-                        .heightDip(HOURLY_VIEW_ITEM_HEIGHT_DP)
-                        .clickEventHandler(this::toggleVisibility)
-                        .hourlyReport(hourlyReport).build();
+                DailyReport dailyReport = realm.copyFromRealm(dailyReports.get(i));
+                Component<DailyReportListItemLayout> listItem = DailyReportListItemLayout.create(componentContext)
+                        .heightDip(DAILY_VIEW_ITEM_HEIGHT_DP)
+                        .clickEventHandler(this::toggleDailyViewExpansion)
+                        .dailyReport(dailyReport)
+                        .build();
                 if (recyclerBinder.isValidPosition(i)) {
                     recyclerBinder.updateItemAt(i, listItem);
                 } else {
                     recyclerBinder.insertItemAt(i, listItem);
                 }
-
-
             }
         };
         updateRecycler.call(isExpanded);
     }
 
-    void toggleVisibility() {
+    void toggleDailyViewExpansion() {
         if (updateRecycler == null) {
             return;
         }
@@ -182,22 +183,22 @@ public class SearchFragment extends Fragment {
         isExpanded = !isExpanded;
 
 
-        shortTermLithoView.animate()
+        dailyLithoView.animate()
                 .scaleY(1f)
                 .setUpdateListener((value) -> {
                     final float scale = getResources().getDisplayMetrics().density;
                     float startingHeight = isExpanded ?
-                            SHORT_TERM_VIEW_COMPRESSED_HEIGHT :
-                            SHORT_TERM_VIEW_EXPANDED_HEIGHT;
+                            DAILY_TERM_VIEW_COMPRESSED_HEIGHT :
+                            DAILY_TERM_VIEW_EXPANDED_HEIGHT;
                     float targetHeight = isExpanded ?
-                            SHORT_TERM_VIEW_EXPANDED_HEIGHT :
-                            SHORT_TERM_VIEW_COMPRESSED_HEIGHT;
+                            DAILY_TERM_VIEW_EXPANDED_HEIGHT :
+                            DAILY_TERM_VIEW_COMPRESSED_HEIGHT;
                     float delta = targetHeight - startingHeight;
 
                     int currentDelta = (int) (delta * (1.0 - value.getAnimatedFraction()));
 
-                    shortTermLithoView.getLayoutParams().height = (int) (scale * (targetHeight - currentDelta));
-                    shortTermLithoView.requestLayout();
+                    dailyLithoView.getLayoutParams().height = (int) (scale * (targetHeight - currentDelta));
+                    dailyLithoView.requestLayout();
                 })
                 //If the list is expanding, immediately add new items, otherwise wait until animation finishes
                 .withStartAction(() -> {
