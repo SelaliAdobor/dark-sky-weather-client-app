@@ -1,62 +1,45 @@
 package com.selaliadobor.darkskyweather;
 
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.design.widget.BottomNavigationView;
 import android.support.v7.app.AppCompatActivity;
-import android.view.MenuItem;
-import android.widget.TextView;
 
-import com.selaliadobor.darkskyweather.data.HourlyReport;
-import com.selaliadobor.darkskyweather.job.RetrieveWeatherJob;
-import com.selaliadobor.darkskyweather.job.RetrieveWeatherJobSetupException;
-
-import io.realm.Realm;
-import timber.log.Timber;
+import com.selaliadobor.darkskyweather.search.SearchFragment;
 
 public class MainActivity extends AppCompatActivity {
 
-    private TextView mTextMessage;
 
-    private BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener
-            = new BottomNavigationView.OnNavigationItemSelectedListener() {
+    public static final String SEARCH_FRAGMENT_TAG = "com.selaliadobor.darkskyweather.search.SearchFragment";
 
-        @Override
-        public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-            switch (item.getItemId()) {
-                case R.id.navigation_home:
-                    mTextMessage.setText(R.string.title_home);
-                    return true;
-                case R.id.navigation_dashboard:
-                    mTextMessage.setText(R.string.title_dashboard);
-                    return true;
-                case R.id.navigation_notifications:
-                    mTextMessage.setText(R.string.title_notifications);
-                    return true;
-            }
-            return false;
+    @Override
+    public void onBackPressed() {
+        if (getFragmentManager().getBackStackEntryCount() > 0 ){
+            getFragmentManager().popBackStack();
+        } else {
+            super.onBackPressed();
         }
-
-    };
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         setContentView(R.layout.activity_main);
 
-        mTextMessage = (TextView) findViewById(R.id.message);
-        BottomNavigationView navigation = (BottomNavigationView) findViewById(R.id.navigation);
-        navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
-        try {
-            RetrieveWeatherJob.startWeatherRetrievalJob("06103",this);
-        } catch (RetrieveWeatherJobSetupException e) {
-            e.printStackTrace();
+        SearchFragment searchFragment = null;
+
+        if(savedInstanceState != null){
+            searchFragment = (SearchFragment) getSupportFragmentManager().findFragmentByTag(SEARCH_FRAGMENT_TAG);
         }
 
-        Realm realm = Realm.getDefaultInstance();
-        realm.where(HourlyReport.class).findAllAsync().asObservable().subscribe(hourlyReports -> {
-            Timber.i("Updated: %s",hourlyReports);
-        });
+        if(searchFragment == null){
+            searchFragment = SearchFragment.create();
+        }
+
+        getSupportFragmentManager()
+                .beginTransaction()
+                 .replace(R.id.content, searchFragment, SEARCH_FRAGMENT_TAG)
+                 .addToBackStack(null)
+                 .commit();
     }
 
 }
