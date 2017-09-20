@@ -11,7 +11,7 @@ import timber.log.Timber;
 public class ApplicationJobCreator implements JobCreator {
     @Override
     public Job create(String tag) {
-        switch (tag){
+        switch (tag) {
             case RetrieveWeatherJob.JOB_TAG:
                 return new RetrieveWeatherJob();
             default:

@@ -1,7 +1,7 @@
 package com.selaliadobor.darkskyweather.job;
 
 
-public class RetrieveWeatherJobSetupException extends Exception{
+public class RetrieveWeatherJobSetupException extends Exception {
 
     RetrieveWeatherJobSetupException(String message) {
         super(message);
