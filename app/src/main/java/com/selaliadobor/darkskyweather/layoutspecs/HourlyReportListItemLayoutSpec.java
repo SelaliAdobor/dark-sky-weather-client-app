@@ -2,6 +2,9 @@ package com.selaliadobor.darkskyweather.layoutspecs;
 
 
 import android.graphics.Color;
+import android.support.v4.text.TextDirectionHeuristicCompat;
+import android.support.v4.text.TextDirectionHeuristicsCompat;
+import android.text.Layout;
 import android.view.View;
 
 import com.facebook.litho.ClickEvent;
@@ -17,10 +20,13 @@ import com.facebook.litho.annotations.OnEvent;
 import com.facebook.litho.annotations.Prop;
 import com.facebook.litho.annotations.PropDefault;
 import com.facebook.litho.widget.Text;
+import com.facebook.litho.widget.VerticalGravity;
 import com.facebook.yoga.YogaEdge;
 import com.github.pavlospt.litho.glide.GlideImage;
 import com.selaliadobor.darkskyweather.data.HourlyReport;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Locale;
 
 @LayoutSpec
@@ -34,6 +40,8 @@ public class HourlyReportListItemLayoutSpec {
             @Prop int heightDip,
             @Prop Runnable clickEventHandler) {
         String temperatureString = String.format(Locale.ENGLISH, "%.2f° F", hourlyReport.getTemperature());
+        SimpleDateFormat dateFormat = new SimpleDateFormat("H\n a\n",Locale.getDefault());
+        String timeOfDay = dateFormat.format(new Date(hourlyReport.getDate())).toUpperCase();
         ComponentLayout textColumn = Column.create(c)
                 .marginDip(YogaEdge.LEFT, 16)
                 .child(
@@ -47,7 +55,7 @@ public class HourlyReportListItemLayoutSpec {
                                 .text(hourlyReport.getSummary())
                                 .textColor(Color.WHITE)
                                 .textSizeSp(14)
-                )
+                ).widthPercent(70)
                 .build();
         return Row.create(c)
                 .heightDip(heightDip)
@@ -58,6 +66,12 @@ public class HourlyReportListItemLayoutSpec {
                     .fitCenter(true)
                     .buildWithLayout())
                 .child(textColumn)
+                .child(Text.create(c)
+                        .text(timeOfDay)
+                        .textColor(Color.WHITE)
+                        .textAlignment(Layout.Alignment.ALIGN_CENTER)
+                        .textSizeSp(14))
+                .marginDip(YogaEdge.ALL,10)
                 .clickHandler(HourlyReportListItemLayout.onClick(c))
                 .build();
     }

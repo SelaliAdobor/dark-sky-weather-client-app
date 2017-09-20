@@ -1,6 +1,7 @@
 package com.selaliadobor.darkskyweather.search;
 
 
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.OrientationHelper;
@@ -75,12 +76,6 @@ public class SearchFragment extends Fragment {
     }
 
     @Override
-    public void onResume() {
-        super.onResume();
-
-    }
-
-    @Override
     public void onPause() {
         super.onPause();
         if (unbinder != null) {
@@ -101,12 +96,7 @@ public class SearchFragment extends Fragment {
         setupHourlyView(componentContext);
         setupDailyView(componentContext);
 
-        bindUi();
-        return inflatedView;
-    }
-
-    private void bindUi() {
-        lifecycleSubscriptions.add(
+        lifecycleSubscriptions.addAll(
                 RxTextView.textChanges(zipCodeEditText)
                         .subscribe(charSequence -> {
                             if (charSequence.length() < 5) {
@@ -116,8 +106,7 @@ public class SearchFragment extends Fragment {
                                 updateZipButton.setEnabled(true);
                                 updateZipButton.setText("Set Zip");
                             }
-                        }));
-        lifecycleSubscriptions.add(
+                        }),
                 RxView.clicks(updateZipButton)
                         .subscribe(aVoid -> {
                             String zipCode = zipCodeEditText.getText().toString();
@@ -129,8 +118,8 @@ public class SearchFragment extends Fragment {
                                         .show();
                             }
                         }));
+        return inflatedView;
     }
-
     private void setupHourlyView(ComponentContext componentContext) {
         Realm realm = Realm.getDefaultInstance();
 
@@ -140,10 +129,11 @@ public class SearchFragment extends Fragment {
                 .build(componentContext);
 
 
+        long startOfLastHour = new Date().getTime() - 3600000L;
         lifecycleSubscriptions.add(
                 realm
                         .where(HourlyReport.class)
-                        .greaterThan("date", new Date().getTime())
+                        .greaterThan("date", startOfLastHour)
                         .findAllSorted("date", Sort.ASCENDING)
                         .asObservable()
                         .subscribe(hourlyReports -> {
@@ -201,7 +191,12 @@ public class SearchFragment extends Fragment {
                 Component<HourlyReportListItemLayout> listItem = HourlyReportListItemLayout.create(componentContext)
                         .heightDip(HOURLY_VIEW_ITEM_HEIGHT_DP)
                         .clickEventHandler(() -> {
-                            //Go to 24hr view
+                            getActivity()
+                                    .getSupportFragmentManager()
+                                    .beginTransaction()
+                                    .replace(R.id.content, FullDayWeatherFragment.create(),null)
+                                    .addToBackStack(null)
+                                    .commit();
                         })
                         .hourlyReport(hourlyReport)
                         .build();
